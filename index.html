@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkedIn Agent — N&G LAB</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LinkedIn Agent">
+<style>
+  :root {
+    --bg: #050505;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --border: #2a2a2a;
+    --lime: #C8FF00;
+    --lime-dim: #9fcc00;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --text-dim: #555;
+    --jesi: #C8FF00;
+    --monica: #00d4ff;
+    --radius: 10px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+
+
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--lime);
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .header-badge {
+    background: #0a66c2;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .tab.active-jesi {
+    color: var(--jesi);
+    border-bottom-color: var(--jesi);
+  }
+  .tab.active-monica {
+    color: var(--monica);
+    border-bottom-color: var(--monica);
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* CALENDAR PANEL */
+  .cal-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: none;
+  }
+  .cal-panel.active { display: block; }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .cal-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .cal-month {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .gen-btn {
+    background: var(--lime);
+    color: #0f0f0f;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .gen-btn:hover { background: var(--lime-dim); }
+  .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .gen-btn.monica-btn {
+    background: var(--monica);
+  }
+  .gen-btn.monica-btn:hover { background: #00b8e0; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .big { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* WEEK CARDS */
+  .week-block {
+    margin-bottom: 20px;
+  }
+  .week-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .post-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--jesi);
+  }
+  .post-card.monica { border-left-color: var(--monica); }
+  .post-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .post-date {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .post-format {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--text-muted);
+  }
+  .post-hook {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .post-copy {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .post-action {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .post-action span { color: var(--lime); font-weight: 600; }
+  .post-card.monica .post-action span { color: var(--monica); }
+
+  .loading-cal {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .dot-pulse { display: inline-block; }
+  .dot-pulse::after {
+    content: '';
+    animation: dots 1.2s infinite;
+  }
+  @keyframes dots {
+    0%   { content: '.'; }
+    33%  { content: '..'; }
+    66%  { content: '...'; }
+  }
+
+  /* CHAT PANEL */
+  .chat-panel {
+    width: 300px;
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .chat-panel { width: 100%; border-left: none; }
+    .cal-panel.active { display: none; }
+    .cal-panel.active.show-cal { display: block; }
+  }
+
+  .chat-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chat-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--lime);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    max-width: 92%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--lime);
+    color: #0f0f0f;
+    border-bottom-right-radius: 3px;
+    font-weight: 500;
+  }
+  .msg.agent {
+    align-self: flex-start;
+    background: var(--surface2);
+    color: var(--text);
+    border-bottom-left-radius: 3px;
+  }
+  .msg.system {
+    align-self: center;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-align: center;
+    max-width: 100%;
+    padding: 4px 0;
+  }
+  .msg.thinking {
+    align-self: flex-start;
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 11px;
+  }
+
+  .chat-input-area {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .chat-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 12px;
+    resize: none;
+    min-height: 36px;
+    max-height: 100px;
+    font-family: inherit;
+    outline: none;
+  }
+  .chat-input:focus { border-color: var(--lime); }
+  .chat-send {
+    background: var(--lime);
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .chat-send:hover { background: var(--lime-dim); }
+  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+  .chat-send svg { width: 14px; height: 14px; fill: #0f0f0f; }
+
+  /* WHO I AM selector in chat */
+  .who-selector {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+  .who-btn {
+    flex: 1;
+    padding: 5px 0;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .who-btn.active-jesi {
+    background: var(--jesi);
+    color: #0f0f0f;
+    border-color: var(--jesi);
+  }
+  .who-btn.active-monica {
+    background: var(--monica);
+    color: #0f0f0f;
+    border-color: var(--monica);
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">N&amp;G LAB</div>
+    <div class="header-sub">Agente LinkedIn personal</div>
+  </div>
+  <div class="header-badge">LinkedIn</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active-jesi" id="tab-jesi" onclick="switchTab('jesi')">✦ Jesi</div>
+  <div class="tab" id="tab-monica" onclick="switchTab('monica')">✦ Mónica</div>
+</div>
+
+<div class="main">
+
+  <!-- CALENDAR JESI -->
+  <div class="cal-panel active" id="cal-jesi">
+    <div class="cal-header">
+      <div>
+        <div class="cal-title">Tu calendario LinkedIn</div>
+        <div class="cal-month" id="month-jesi"></div>
+      </div>
+      <button class="gen-btn" id="btn-jesi" onclick="generateCalendar('jesi')">Generar mes</button>
+    </div>
+    <div id="cal-content-jesi">
+      <div class="empty-state">
+        <div class="big">📅</div>
+        <p>Pulsa <strong>Generar mes</strong> para que el agente te proponga el calendario completo de octubre: qué publicar, a quién seguir y a quién comentar.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR MONICA -->
+  <div class="cal-panel" id="cal-monica">
+    <div class="cal-header">
+      <div>
+        <div class="cal-title">Calendario de Mónica</div>
+        <div class="cal-month" id="month-monica"></div>
+      </div>
+      <button class="gen-btn monica-btn" id="btn-monica" onclick="generateCalendar('monica')">Generar mes</button>
+    </div>
+    <div id="cal-content-monica">
+      <div class="empty-state">
+        <div class="big">📅</div>
+        <p>Pulsa <strong>Generar mes</strong> para que el agente proponga el calendario de Mónica: posts, interacciones y acciones de captación.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-dot"></div>
+      Agente LinkedIn
+    </div>
+    <div class="who-selector">
+      <button class="who-btn active-jesi" id="who-jesi" onclick="setWho('jesi')">Soy Jesi</button>
+      <button class="who-btn" id="who-monica" onclick="setWho('monica')">Soy Mónica</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg system">Pregúntame cualquier cosa sobre LinkedIn — cómo responder a un comentario, qué contestar en un DM, cómo reaccionar a algo que ha pasado.</div>
+      <div class="msg agent">Hola. Estoy aquí para ayudarte con lo que surja en tu LinkedIn en tiempo real. ¿Qué necesitas?</div>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input" placeholder="Escribe aquí..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="chat-send" id="chat-send" onclick="sendMessage()">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10l16-8-6 8 6 8z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let activeTab = 'jesi';
+let chatWho = 'jesi';
+let calendarData = { jesi: null, monica: null };
+let chatBusy = false;
+
+// Set month labels
+const now = new Date();
+const monthName = now.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+document.getElementById('month-jesi').textContent = monthName;
+document.getElementById('month-monica').textContent = monthName;
+
+function switchTab(who) {
+  activeTab = who;
+  document.getElementById('cal-jesi').classList.toggle('active', who === 'jesi');
+  document.getElementById('cal-monica').classList.toggle('active', who === 'monica');
+  document.getElementById('tab-jesi').className = 'tab' + (who === 'jesi' ? ' active-jesi' : '');
+  document.getElementById('tab-monica').className = 'tab' + (who === 'monica' ? ' active-monica' : '');
+}
+
+function setWho(who) {
+  chatWho = who;
+  document.getElementById('who-jesi').className = 'who-btn' + (who === 'jesi' ? ' active-jesi' : '');
+  document.getElementById('who-monica').className = 'who-btn' + (who === 'monica' ? ' active-monica' : '');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function scrollChat() {
+  const msgs = document.getElementById('chat-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addMsg(text, type) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+async function sendMessage() {
+  if (chatBusy) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  chatBusy = true;
+  document.getElementById('chat-send').disabled = true;
+
+  addMsg(text, 'user');
+  const thinking = addMsg('Pensando…', 'thinking');
+
+  const profile = chatWho === 'jesi'
+    ? 'Soy Jesica Márquez (Jesi), co-fundadora de N&G LAB, agencia de marketing digital IA para pymes españolas. Mi objetivo en LinkedIn es conseguir colaboraciones con agencias y consultoras que gestionan el Kit Digital y necesitan subcontratar servicios de automatización y marketing IA. Tengo muy poca actividad hasta ahora, apenas un par de semanas publicando.'
+    : 'Soy Mónica Solís, co-fundadora de N&G LAB, agencia de marketing digital IA para pymes españolas. Mi objetivo en LinkedIn es captar clientes pymes y autónomos para los servicios de la agencia: gestión de redes sociales, desarrollo web y automatización. Tengo más actividad que Jesi en LinkedIn.';
+
+  const systemPrompt = `Eres el agente de LinkedIn personal de ${chatWho === 'jesi' ? 'Jesica Márquez (Jesi)' : 'Mónica Solís'} de N&G LAB.
+
+Perfil de quien habla contigo:
+${profile}
+
+Tu trabajo es dar respuestas concretas y accionables sobre LinkedIn: cómo responder a comentarios, qué contestar en DMs, cómo reaccionar a situaciones que pasan en la plataforma, qué publicar, a quién seguir, cómo conectar con alguien, etc.
+
+Contexto de N&G LAB:
+- Agencia de marketing digital especializada en automatización con IA para pymes españolas
+- Servicios: gestión de redes sociales, desarrollo web, automatización
+- Producto Orbo: asistente de voz IA para negocios
+
+Tono: directo, informal, en español de España. Nada de rodeos. Da la respuesta concreta que necesita, no opciones infinitas.`;
+
+  const sample = await claude.use('sample');
+  if (!sample) {
+    thinking.textContent = 'Error: el agente no está disponible ahora mismo.';
+    thinking.className = 'msg agent';
+    chatBusy = false;
+    document.getElementById('chat-send').disabled = false;
+    return;
+  }
+
+  try {
+    let fullText = '';
+    thinking.textContent = '';
+    thinking.className = 'msg agent';
+
+    await sample(
+      [{ role: 'user', content: `${systemPrompt}\n\nMensaje: ${text}` }],
+      {
+        onText({ text: t }) {
+          fullText = t;
+          thinking.textContent = fullText;
+          scrollChat();
+        }
+      }
+    );
+  } catch (e) {
+    thinking.textContent = 'Algo ha fallado. Inténtalo de nuevo.';
+  }
+
+  chatBusy = false;
+  document.getElementById('chat-send').disabled = false;
+}
+
+async function generateCalendar(who) {
+  const btn = document.getElementById('btn-' + who);
+  const container = document.getElementById('cal-content-' + who);
+  btn.disabled = true;
+  btn.textContent = 'Generando…';
+
+  container.innerHTML = `<div class="loading-cal">El agente está preparando tu calendario<span class="dot-pulse"></span></div>`;
+
+  const profile = who === 'jesi'
+    ? 'Jesica Márquez (Jesi), co-fundadora de N&G LAB. Objetivo: conseguir colaboraciones con agencias y consultoras que gestionan el Kit Digital en España y necesitan subcontratar servicios de marketing IA y automatización. Nivel de actividad actual: muy bajo, apenas 2 semanas publicando. Posicionamiento: fundadora técnica especializada en IA aplicada a pymes.'
+    : 'Mónica Solís, co-fundadora y directora creativa de N&G LAB. Objetivo: captar clientes pymes y autónomos españoles para los servicios de la agencia (gestión de redes, web, automatización, Orbo). Nivel de actividad: más activa que Jesi. Posicionamiento: experta en marketing digital y redes sociales para pymes.';
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNameES = today.toLocaleDateString('es-ES', { month: 'long' });
+
+  const prompt = `Eres el agente de LinkedIn personal de ${who === 'jesi' ? 'Jesi' : 'Mónica'} de N&G LAB.
+
+Perfil: ${profile}
+
+Sobre N&G LAB: Agencia de marketing digital especializada en automatización con IA para pymes españolas. Servicios: gestión de redes sociales, desarrollo web, Orbo (asistente IA de voz).
+
+Crea un calendario LinkedIn para ${monthNameES} ${year} con exactamente 3 posts por semana (martes, miércoles y jueves). Para cada semana del mes da:
+- Los 3 posts de la semana, cada uno con: fecha (día/mes), formato (texto/carrusel/imagen), gancho de apertura (primera línea impactante, máx 15 palabras), copy resumido (2-3 frases del contenido principal), acción de engagement del día (a quién comentar o seguir, muy específico).
+
+Además incluye 2-3 acciones de networking por semana: seguir a X tipo de perfil, comentar en X tipo de post, enviar invitación a X tipo de persona.
+
+Responde ÚNICAMENTE en JSON con esta estructura exacta:
+{
+  "semanas": [
+    {
+      "label": "Semana 1 — 1-7 oct",
+      "posts": [
+        {
+          "fecha": "Martes 1 oct",
+          "formato": "Texto",
+          "gancho": "Primera línea del post",
+          "copy": "Resumen del contenido",
+          "accion": "Hoy: comenta en 3 posts de consultoras de digitalización"
+        }
+      ],
+      "networking": ["Sigue a 5 gestores de Kit Digital en LinkedIn", "Envía 3 invitaciones a directores de agencias digitales"]
+    }
+  ]
+}`;
+
+  const sample = await claude.use('sample');
+  if (!sample) {
+    container.innerHTML = `<div class="empty-state"><div class="big">⚠️</div><p>El agente no está disponible. Recarga la página.</p></div>`;
+    btn.disabled = false;
+    btn.textContent = 'Generar mes';
+    return;
+  }
+
+  try {
+    const result = await sample(prompt, { modelTier: 'default' });
+    let json;
+    try {
+      const clean = result.text.replace(/```json|```/g, '').trim();
+      json = JSON.parse(clean);
+    } catch {
+      throw new Error('parse');
+    }
+
+    calendarData[who] = json;
+    renderCalendar(who, json);
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state"><div class="big">⚠️</div><p>Algo falló al generar. Inténtalo de nuevo.</p></div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Regenerar';
+}
+
+function renderCalendar(who, data) {
+  const container = document.getElementById('cal-content-' + who);
+  const isMonty = who === 'monica';
+  let html = '';
+
+  for (const semana of data.semanas) {
+    html += `<div class="week-block">`;
+    html += `<div class="week-label">${semana.label}</div>`;
+
+    for (const post of semana.posts) {
+      html += `<div class="post-card ${isMonty ? 'monica' : ''}">
+        <div class="post-card-top">
+          <div class="post-date">${post.fecha}</div>
+          <div class="post-format">${post.formato}</div>
+        </div>
+        <div class="post-hook">${post.gancho}</div>
+        <div class="post-copy">${post.copy}</div>
+        <div class="post-action">→ <span>${post.accion}</span></div>
+      </div>`;
+    }
+
+    if (semana.networking && semana.networking.length) {
+      html += `<div class="post-card ${isMonty ? 'monica' : ''}" style="background:var(--surface2); border-style: dashed;">
+        <div class="week-label" style="margin-bottom:6px">Networking esta semana</div>`;
+      for (const n of semana.networking) {
+        html += `<div class="post-action" style="margin-bottom:4px">→ <span style="color:${isMonty ? 'var(--monica)' : 'var(--lime)'}">${n}</span></div>`;
+      }
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js");
+  });
+}
+</script>
+</body>
+</html>
